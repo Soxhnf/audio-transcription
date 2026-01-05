@@ -35,3 +35,167 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+
+/* --- ACTION SHEET : POPUP CENTRÉ FINAL --- */
+.custom-action-sheet {
+  --background: #15162a !important;
+  --backdrop-opacity: 0.85;
+
+  .action-sheet-wrapper,
+  .action-sheet-container,
+  .action-sheet-group {
+    overflow: hidden !important;
+  }
+
+  .action-sheet-wrapper {
+    position: fixed !important;
+    top: 50% !important;
+    left: 27% !important;
+    transform: translate(-50%, -50%) !important;
+    bottom: 100px;
+    width: 90% !important;
+    max-width: 420px !important;
+
+    background: #15162a !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(76, 94, 255, 0.2) !important;
+    box-shadow: none !important;
+  }
+
+  .action-sheet-container {
+    background: transparent !important;
+    padding-top: 50px !important;
+  }
+
+  .action-sheet-header {
+    min-height: 50px !important;
+    padding-top: 20px !important;
+    border: none !important;
+  }
+
+  .action-sheet-title {
+    position: absolute !important;
+    top: 20px !important;
+    left: 20px !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    letter-spacing: 1px !important;
+  }
+
+  .action-sheet-cancel {
+    
+    position: absolute !important;
+    top: 15px !important;
+    right: 15px !important;
+    width: 35px !important;
+    height: 35px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 50% !important;
+    --button-color: transparent !important;
+
+    &::after {
+      content: '✕';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff4c4c;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    &::before {
+      display: none !important;
+    }
+  }
+
+  .action-sheet-group {
+    background: transparent !important;
+    border: none !important;
+    margin-bottom: 16px !important;
+    padding: 10px;
+  }
+
+  .action-sheet-button {
+    --background: rgba(255, 255, 255, 0.04);
+    --background-focused: rgba(76, 94, 255, 0.1);
+    border-radius: 15px !important;
+    margin: 10px 0 !important;
+    height: 64px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .action-sheet-button-inner {
+    color: white !important;
+    font-size: 17px !important;
+  }
+
+  ion-icon {
+    color: #4c5eff !important;
+    font-size: 24px !important;
+    margin-inline-end: 15px !important;
+  }
+}
+
+
+.custom-alert {
+  --background: #15162a !important;
+  
+  .alert-wrapper {
+    min-width: 90% !important; // Largeur augmentée
+    background: #15162a !important;
+    border-radius: 25px !important;
+    border: 1px solid rgba(76, 94, 255, 0.4) !important;
+    box-shadow: 0 0 30px rgba(76, 94, 255, 0.2) !important;
+  }
+
+  .alert-title {
+    color: white !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    padding-top: 20px !important;
+  }
+
+  .alert-sub-title {
+    color: #8c90a8 !important;
+    font-size: 16px !important;
+  }
+
+  .alert-input-group {
+    padding: 20px !important;
+    
+    .alert-input {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 12px !important;
+      color: white !important;
+      height: 55px !important;
+      padding-left: 15px !important;
+      --placeholder-color: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .alert-button-group {
+    padding: 10px 20px 20px !important;
+    
+    .alert-button {
+      font-weight: 800 !important;
+      font-size: 16px !important;
+      text-transform: uppercase !important;
+      
+      // Style spécifique pour ANALYSER (le bouton de droite)
+      &:last-child {
+        color: #4c5eff !important;
+      }
+      
+      // Style spécifique pour ANNULER (le bouton de gauche)
+      &.alert-button-role-cancel {
+        color: #8c90a8 !important;
+      }
+    }
+  }
+}

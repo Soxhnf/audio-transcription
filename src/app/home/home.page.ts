@@ -1,9 +1,8 @@
 import { Component, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Clipboard } from '@capacitor/clipboard';
-import { ToastController } from '@ionic/angular';
+import { ToastController, ActionSheetController, AlertController, LoadingController } from '@ionic/angular';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { ActionSheetController } from '@ionic/angular';
 import { saveAs } from 'file-saver';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
@@ -15,257 +14,246 @@ import { Document, Packer, Paragraph, TextRun } from 'docx';
   standalone: false,
 })
 export class HomePage {
-
-  @ViewChild('fileInput') fileInput!: ElementRef;
+  // Accès aux inputs via ViewChild
+  @ViewChild('audioInput') audioInput!: ElementRef;
+  @ViewChild('videoInput') videoInput!: ElementRef;
 
   transcribedText = '';
   isRecording = false;
   audioURL: SafeUrl | null = null;
-
-  mediaRecorder!: MediaRecorder;
-  audioChunks: Blob[] = [];
-  recordingSeconds = 0;
-  recordingTime = '00:00';
-  timerInterval: any;
-  selectedFile: File | null = null;
   previewType: 'audio' | 'video' | null = null;
 
-  
-
+  // Variables MediaRecorder
+  private mediaRecorder: any;
+  private audioChunks: Blob[] = [];
+  recordingSeconds = 0;
+  recordingTime = '00:00';
+  private timerInterval: any;
 
   constructor(
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
     private toastCtrl: ToastController,
     private sanitizer: DomSanitizer,
-    private actionSheetCtrl: ActionSheetController
+    private actionSheetCtrl: ActionSheetController,
+    private alertCtrl: AlertController,
+    private loadingCtrl: LoadingController
   ) {}
 
-  // 🎙️ Start recording
-  // 🎙️ Start recording
+  // ==========================================
+  // 🎙️ GESTION DU MICRO
+  // ==========================================
+
   async startRecording() {
-    this.isRecording = true;
-    this.audioURL = null; // Clear previous recording when starting new
-    this.recordingSeconds = 0;
-    this.updateRecordingTime();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.audioChunks = [];
+      this.mediaRecorder = new MediaRecorder(stream);
 
-    this.timerInterval = setInterval(() => {
-      this.recordingSeconds++;
-      this.updateRecordingTime();
-    }, 1000);
+      this.mediaRecorder.ondataavailable = (event: any) => {
+        if (event.data.size > 0) this.audioChunks.push(event.data);
+      };
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    this.audioChunks = [];
-    this.mediaRecorder = new MediaRecorder(stream);
-
-    this.mediaRecorder.ondataavailable = (event) => {
-      this.audioChunks.push(event.data);
-    };
-
-    this.mediaRecorder.onstop = () => {
-      this.previewType = 'audio';
-      const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
-      const url = URL.createObjectURL(audioBlob);
-      
-      // Update the URL
-      this.audioURL = this.sanitizer.bypassSecurityTrustUrl(url);
-
-      // Force Angular to detect the change immediately
-      this.cdr.detectChanges(); 
-
-      this.sendAudioToBackend(audioBlob);
-    };
-
-    this.mediaRecorder.start();
-  }
-
-  // ⏹️ Stop recording
-  stopRecording() {
-    this.isRecording = false;
-
-  clearInterval(this.timerInterval);
-  this.timerInterval = null;
-    this.mediaRecorder.stop();
-    this.isRecording = false;
-  }
-
-  // 📤 Send audio to backend
-  sendAudioToBackend(audio: Blob) {
-
-
-  const formData = new FormData();
-  formData.append('file', audio, 'recording.webm');
-
-  this.http.post<any>('http://localhost:8000/transcribe', formData)
-    .subscribe({
-      next: (res) => {
-        this.transcribedText = res.text;
-      
+      this.mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        this.previewType = 'audio';
+        const url = URL.createObjectURL(audioBlob);
+        this.audioURL = this.sanitizer.bypassSecurityTrustUrl(url);
+        
+        // On envoie au backend
+        this.sendToBackend(audioBlob);
         this.cdr.detectChanges();
+      };
+
+      this.mediaRecorder.start();
+      this.isRecording = true;
+      this.startTimer();
+    } catch (err) {
+      console.error("Erreur micro:", err);
+      this.showToast("Impossible d'accéder au micro", 'danger');
+    }
+  }
+
+  stopRecording() {
+    if (this.mediaRecorder && this.isRecording) {
+      this.mediaRecorder.stop();
+      this.isRecording = false;
+      this.stopTimer();
+      // On coupe le flux micro pour libérer le hardware
+      this.mediaRecorder.stream.getTracks().forEach((track: any) => track.stop());
+    }
+  }
+
+  // ==========================================
+  // 📂 GESTION DES FICHIERS & LIENS
+  // ==========================================
+
+async presentFileOptions() {
+  const actionSheet = await this.actionSheetCtrl.create({
+    header: 'IMPORTER UN FICHIER',
+    cssClass: 'custom-action-sheet',
+    buttons: [
+      {
+        text: 'Audio local',
+        icon: 'musical-notes',
+        handler: () => this.audioInput.nativeElement.click()
       },
-      error: () => {
-     
-        alert('Transcription failed');
+      {
+        text: 'Vidéo locale',
+        icon: 'videocam',
+        handler: () => this.videoInput.nativeElement.click()
+      }
+    ]
+  });
+
+  await actionSheet.present();
+
+  // Fermer au clic sur le ❌
+  document
+    .querySelector('.custom-action-sheet .action-sheet-wrapper')
+    ?.addEventListener('click', (e: any) => {
+      if (e.target.textContent === '✕') {
+        actionSheet.dismiss();
       }
     });
 }
 
 
-  async copyText() {
-  if (!this.transcribedText) return;
+  onAudioFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) this.handleLocalFile(file, 'audio');
+  }
 
-  await Clipboard.write({
-    string: this.transcribedText
-  });
+  onVideoFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) this.handleLocalFile(file, 'video');
+  }
 
-  const toast = await this.toastCtrl.create({
-    message: 'Texte copié dans le presse-papiers !',
-    duration: 1500,
-    position: 'bottom',
-    color: 'success'
-  });
+  private handleLocalFile(file: File, type: 'audio' | 'video') {
+    this.previewType = type;
+    const url = URL.createObjectURL(file);
+    this.audioURL = this.sanitizer.bypassSecurityTrustUrl(url);
+    this.sendToBackend(file);
+  }
 
-  toast.present();
-}
-updateRecordingTime() {
-  const minutes = Math.floor(this.recordingSeconds / 60);
-  const seconds = this.recordingSeconds % 60;
-
-  this.recordingTime =
-    `${minutes.toString().padStart(2, '0')}:` +
-    `${seconds.toString().padStart(2, '0')}`;
-}
-
-// 1. Afficher le menu de choix
-  async presentDownloadActionSheet() {
-    if (!this.transcribedText) return;
-
-    const actionSheet = await this.actionSheetCtrl.create({
-      header: 'Exporter la transcription',
-      buttons: [
-        {
-          text: 'Fichier Word (.docx)',
-          icon: 'document-text-outline',
-          handler: () => {
-            this.downloadDocx();
-          }
-        },
-        {
-          text: 'Fichier PDF (.pdf)',
-          icon: 'document-attach-outline', // ou une icône PDF si dispo
-          handler: () => {
-            this.downloadPdf();
-          }
-        },
-        {
-          text: 'Fichier Texte (.txt)',
-          icon: 'text-outline',
-          handler: () => {
-            this.downloadTxt();
-          }
-        },
-        {
-          text: 'Annuler',
-          icon: 'close',
-          role: 'cancel'
+// 🔗 Pop-up Lien URL
+async presentUrlPrompt() {
+  const alert = await this.alertCtrl.create({
+    header: 'Lien Web',
+    subHeader: 'Collez l\'URL de la vidéo ou de l\'audio',
+    cssClass: 'custom-alert', // <--- IMPORTANT
+    inputs: [
+      {
+        name: 'url',
+        type: 'url',
+        placeholder: 'https://...',
+      }
+    ],
+    buttons: [
+      { text: 'Annuler', role: 'cancel' },
+      {
+        text: 'Analyser',
+        handler: (data) => {
+          if (data.url) this.sendUrlToBackend(data.url);
         }
+      }
+    ]
+  });
+  await alert.present();
+}
+
+  // ==========================================
+  // 📡 COMMUNICATION BACKEND
+  // ==========================================
+
+  async sendToBackend(fileOrBlob: Blob | File) {
+    const loading = await this.loadingCtrl.create({ message: 'Transcription en cours...' });
+    await loading.present();
+
+    const formData = new FormData();
+    formData.append('file', fileOrBlob, (fileOrBlob instanceof File) ? fileOrBlob.name : 'recording.webm');
+
+    this.http.post<any>('http://localhost:8000/transcribe', formData).subscribe({
+      next: (res) => {
+        this.transcribedText = res.text;
+        loading.dismiss();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error("Erreur Backend:", err);
+        loading.dismiss();
+        this.showToast("Échec de la transcription", 'danger');
+      }
+    });
+  }
+
+  async sendUrlToBackend(url: string) {
+    if (!url) return;
+    const loading = await this.loadingCtrl.create({ message: 'Traitement du lien...' });
+    await loading.present();
+
+    this.http.post<any>('http://localhost:8000/transcribe-url', { url }).subscribe({
+      next: (res) => {
+        this.transcribedText = res.text;
+        loading.dismiss();
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        loading.dismiss();
+        this.showToast("Erreur sur le lien", 'danger');
+      }
+    });
+  }
+
+  // ==========================================
+  // 🛠️ UTILS (Timer, Toast, Export)
+  // ==========================================
+
+  private startTimer() {
+    this.recordingSeconds = 0;
+    this.timerInterval = setInterval(() => {
+      this.recordingSeconds++;
+      const min = Math.floor(this.recordingSeconds / 60).toString().padStart(2, '0');
+      const sec = (this.recordingSeconds % 60).toString().padStart(2, '0');
+      this.recordingTime = `${min}:${sec}`;
+    }, 1000);
+  }
+
+  private stopTimer() {
+    clearInterval(this.timerInterval);
+  }
+
+  async copyText() {
+    await Clipboard.write({ string: this.transcribedText });
+    this.showToast('Copié !', 'success');
+  }
+
+  async showToast(msg: string, color: string = 'dark') {
+    const toast = await this.toastCtrl.create({ message: msg, duration: 2000, color: color as any });
+    toast.present();
+  }
+
+  // Garde tes fonctions downloadDocx(), downloadPdf(), etc.
+  async presentDownloadActionSheet() {
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: 'Exporter',
+      buttons: [
+        { text: 'Word', icon: 'document-text', handler: () => this.downloadDocx() },
+        { text: 'PDF', icon: 'document-attach', handler: () => this.downloadPdf() },
+        { text: 'Annuler', role: 'cancel' }
       ]
     });
     await actionSheet.present();
   }
 
-  // 2. Générer Word
   downloadDocx() {
-    const doc = new Document({
-      sections: [{
-        properties: {},
-        children: [
-          new Paragraph({
-            children: [
-              new TextRun(this.transcribedText),
-            ],
-          }),
-        ],
-      }],
-    });
-
-    Packer.toBlob(doc).then((blob) => {
-      saveAs(blob, 'transcription.docx');
-      this.showToast('Téléchargement Word terminé');
-    });
+    const doc = new Document({ sections: [{ children: [new Paragraph({ children: [new TextRun(this.transcribedText)] })] }] });
+    Packer.toBlob(doc).then(blob => saveAs(blob, 'transcription.docx'));
   }
 
-  // 3. Générer PDF
   downloadPdf() {
     const doc = new jsPDF();
-    
-    // SplitTextToSize permet de revenir à la ligne automatiquement
-    const splitText = doc.splitTextToSize(this.transcribedText, 190);
-    
-    doc.setFontSize(12);
-    doc.text(splitText, 10, 10);
+    doc.text(doc.splitTextToSize(this.transcribedText, 180), 10, 10);
     doc.save('transcription.pdf');
-    this.showToast('Téléchargement PDF terminé');
   }
-
-  // 4. Générer TXT
-  downloadTxt() {
-    const blob = new Blob([this.transcribedText], { type: 'text/plain;charset=utf-8' });
-    saveAs(blob, 'transcription.txt');
-    this.showToast('Téléchargement Texte terminé');
-  }
-
-  // Petit utilitaire pour afficher un message
-  async showToast(msg: string) {
-    const toast = await this.toastCtrl.create({
-      message: msg,
-      duration: 2000,
-      color: 'success',
-      position: 'bottom'
-    });
-    toast.present();
-  }
-  onAudioFileSelected(event: any) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  this.handleImportedFile(file);
 }
-
-onVideoFileSelected(event: any) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  this.handleImportedFile(file);
-}
-
-handleImportedFile(file: File) {
-  const url = URL.createObjectURL(file);
-  this.audioURL = this.sanitizer.bypassSecurityTrustUrl(url);
-
-  if (file.type.startsWith('video')) {
-    this.previewType = 'video';
-  } else {
-    this.previewType = 'audio';
-  }
-
-  this.sendFileToBackend(file);
-}
-
-sendFileToBackend(file: File | Blob) {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  this.http.post<any>('http://localhost:8000/transcribe', formData)
-    .subscribe({
-      next: res => {
-        this.transcribedText = res.text;
-        this.cdr.detectChanges();
-      },
-      error: () => alert('Transcription failed')
-    });
-}
-
-}
-
-

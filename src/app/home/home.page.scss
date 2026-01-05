@@ -1,161 +1,247 @@
-/* ===============================
-   RECORDING CARD
-================================ */
-.record-card {
-  margin-top: 20px;
+/* --- VARIABLES --- */
+:host {
+  --app-bg: #050511; /* Très sombre, presque noir */
+  --app-bg-gradient: linear-gradient(180deg, #0f1020 0%, #05050a 100%);
+  --primary-glow: #4c5eff; /* Le bleu de ton image */
+  --secondary-glow: #7a4cff;
+  --text-main: #ffffff;
+  --text-muted: #8c90a8;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
 }
 
-/* ===============================
-   ROUND MIC BUTTON
-================================ */
-.record-container {
+/* --- STRUCTURE PRINCIPALE --- */
+.main-content {
+  --background: var(--app-bg-gradient);
+}
+
+.content-wrapper {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  padding-bottom: 40px;
+}
+
+/* --- HEADER --- */
+.transparent-toolbar {
+  --background: transparent;
+  --color: white;
+  padding-top: 10px;
+}
+
+.app-title {
+  font-weight: 600;
+  font-size: 18px;
+  .subtitle {
+    font-size: 10px;
+    opacity: 0.6;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+}
+
+/* --- HERO SECTION (Haut) --- */
+.hero-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  padding: 20px 0;
-}
-
-.record-btn {
-  width: 72px;
-  height: 72px;
-  --border-radius: 50%;
-
-  font-size: 28px;
-  --box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* Pulse animation when recording */
-ion-button[color="danger"] {
-  animation: pulse 1.2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(235, 68, 90, 0.6);
-  }
-  70% {
-    transform: scale(1.1);
-    box-shadow: 0 0 0 18px rgba(235, 68, 90, 0);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.record-label {
-  margin-top: 14px;
-  font-size: 14px;
-  color: var(--ion-color-medium);
   text-align: center;
+  padding: 20px;
 }
 
-/* ===============================
-   TRANSCRIPTION CARD
-================================ */
-.transcription-card {
-  margin-top: 25px;
-  min-height: 320px;
+.main-greeting {
+  font-size: 32px;
+  font-weight: 700;
+  color: #333; /* Fallback */
+  background: linear-gradient(to right, #fff, #aebaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  span {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-muted);
+    -webkit-text-fill-color: var(--text-muted);
+  }
 }
 
-.card-header {
+.status-badge {
+  background: rgba(76, 94, 255, 0.2);
+  color: #8da0ff;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
   display: flex;
   align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #ff4c4c;
+    border-radius: 50%;
+    animation: blink 1s infinite;
+  }
+}
+
+/* --- TIMER & WAVEFORM --- */
+.timer {
+  font-size: 48px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  color: white;
+  margin: 0;
+  text-shadow: 0 0 20px rgba(76, 94, 255, 0.5);
+}
+
+.waveform-modern {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 50px;
+  margin-top: 20px;
+
+  span {
+    width: 6px;
+    background: linear-gradient(to top, var(--primary-glow), #d0d6ff);
+    border-radius: 10px;
+    animation: waveCustom 1s ease-in-out infinite;
+    
+    &:nth-child(1) { height: 20%; animation-delay: 0s; }
+    &:nth-child(2) { height: 40%; animation-delay: 0.1s; }
+    &:nth-child(3) { height: 70%; animation-delay: 0.2s; }
+    &:nth-child(4) { height: 40%; animation-delay: 0.3s; }
+    &:nth-child(5) { height: 20%; animation-delay: 0.4s; }
+  }
+}
+
+/* --- BOTTOM SHEET & TRANSCRIPTION --- */
+.bottom-sheet {
+  padding: 20px;
+  width: 100%;
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 15px;
+  margin-bottom: 30px;
+  color: white;
+}
+
+.box-header {
+  display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  .label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+  ion-icon { color: white; }
 }
 
 ion-textarea {
-  font-size: 1rem;
-}
-.record-timer {
-  margin-top: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ion-color-danger);
-  letter-spacing: 1px;
-}
-/* 
-   WAVEFORM ANIMATION*/
-.waveform {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 6px;
-  height: 30px;
-  margin-top: 10px;
+  --background: transparent;
+  --color: white;
+  --placeholder-color: rgba(255,255,255,0.3);
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-.waveform span {
-  width: 4px;
-  height: 10px;
-  background: var(--ion-color-danger);
-  border-radius: 4px;
-  animation: wave 1.2s infinite ease-in-out;
-}
-
-/* staggered animation */
-.waveform span:nth-child(1) { animation-delay: 0s; }
-.waveform span:nth-child(2) { animation-delay: 0.15s; }
-.waveform span:nth-child(3) { animation-delay: 0.3s; }
-.waveform span:nth-child(4) { animation-delay: 0.45s; }
-.waveform span:nth-child(5) { animation-delay: 0.6s; }
-
-@keyframes wave {
-  0% { height: 6px; }
-  50% { height: 26px; }
-  100% { height: 6px; }
-}
-.custom-toolbar {
-  --background: linear-gradient(135deg, #5de466, #6366f1);
-  --color: #ffffff;
-}
-
-.subtitle {
-  font-size: 12px;
-  opacity: 0.85;
-  margin-top: 2px;
-}
-
-
-  .audio-label {
-    font-size: 0.9rem;
-    color: var(--ion-color-medium);
-    margin-bottom: 5px;
-  }
-  
-
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.import-section {
-  margin-top: 16px;
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  opacity: 0.9;
-}
-
-.video-player {
+/* --- MEDIA PLAYERS --- */
+.custom-audio {
   width: 100%;
-  max-width: 360px;
-  max-height: 200px;
-  object-fit: cover;
-  border-radius: 14px;
-  background: #000;
-}
-
-.video-player {
-  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-}
-/* Dans home.page.scss */
-
-.audio-player {
-  width: 100%;            /* Force la largeur maximale */
-  height: 54px;           /* Hauteur standard pour éviter l'écrasement */
-  display: block;         /* Important pour que width fonctionne bien */
+  height: 40px;
   margin-top: 10px;
-  border-radius: 0;       /* Enlever le radius aide parfois l'affichage natif */
-  outline: none;
+  filter: invert(1); /* Astuce pour rendre le lecteur natif sombre */
 }
+.custom-video {
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+/* --- CONTROLS CONTAINER --- */
+.controls-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-bottom: 10px;
+}
+
+.side-actions .icon-btn {
+  --color: white;
+  background: var(--glass-bg);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  --padding-start: 0; --padding-end: 0;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* --- LE GROS BOUTON MICRO STYLE IMAGE --- */
+.mic-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 90px;
+  height: 90px;
+}
+
+/* Le dégradé bleu courbé derrière le bouton (comme sur l'image) */
+.glow-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(76, 94, 255, 0.4) 0%, rgba(0,0,0,0) 70%);
+  transform: scale(1);
+  transition: all 0.3s ease;
+  
+  &.active {
+    background: radial-gradient(circle, rgba(255, 76, 76, 0.4) 0%, rgba(0,0,0,0) 70%);
+    transform: scale(1.5);
+    animation: pulseGlow 2s infinite;
+  }
+}
+
+.main-mic-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+  color: white;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 10px 30px rgba(76, 94, 255, 0.5);
+  transition: transform 0.2s;
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* --- ANIMATIONS --- */
+@keyframes blink { 50% { opacity: 0.4; } }
+
+@keyframes waveCustom {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(2.5); }
+}
+
+@keyframes pulseGlow {
+  0% { opacity: 0.6; transform: scale(1.4); }
+  50% { opacity: 0.3; transform: scale(1.8); }
+  100% { opacity: 0.6; transform: scale(1.4); }
+}
+

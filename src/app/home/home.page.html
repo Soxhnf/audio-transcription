@@ -1,152 +1,94 @@
-<ion-header translucent>
-  <ion-toolbar class="custom-toolbar">
-    <ion-title class="ion-text-center">
-   Audio → Texte
-  <div class="subtitle">Transcription intelligente avec IA</div>
-</ion-title>
+<ion-header class="ion-no-border">
+  <ion-toolbar class="transparent-toolbar">
+    <ion-buttons slot="start">
+      <ion-button color="light">
+        <ion-icon name="chevron-back"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="ion-text-center app-title">
+      Speech2Text APP
+      
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button color="light">
+        <ion-icon name="settings-sharp"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content fullscreen class="ion-padding">
+<ion-content fullscreen class="main-content">
+  <div class="content-wrapper">
 
-  <!-- Recording Section -->
-  <ion-card class="record-card">
-    <div class="record-container">
+    <div class="hero-section">
+      <div class="status-badge" *ngIf="isRecording">
+        <span class="pulse-dot"></span> Enregistrement...
+      </div>
 
-  <ion-button
-    class="record-btn"
-    shape="round"
-    color="primary"
-    *ngIf="!isRecording"
-    (click)="startRecording()">
-    <ion-icon name="mic"></ion-icon>
-  </ion-button>
+      <h2 class="main-greeting" *ngIf="!isRecording && !transcribedText && !audioURL">
+        Bonjour,<br><span>Prêt à transcrire ?</span>
+      </h2>
 
-  <ion-button
-    class="record-btn"
-    shape="round"
-    color="danger"
-    *ngIf="isRecording"
-    (click)="stopRecording()">
-    <ion-icon name="stop"></ion-icon>
-  </ion-button>
+      <div class="recording-visualizer" *ngIf="isRecording">
+        <h1 class="timer">{{ recordingTime }}</h1>
+        <div class="waveform-modern">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
 
-  <p class="record-label">
-    {{ isRecording ? 'Enregistrement en cours…' : 'Appuyez pour enregistrer' }}
-  </p>
-   <p class="record-timer" *ngIf="isRecording">
-  ⏱{{ recordingTime }}
-  </p>
-  <div class="waveform" *ngIf="isRecording">
-  <span></span>
-  <span></span>
-  <span></span>
-  <span></span>
-  <span></span>
-</div>
-<div class="import-section" *ngIf="!isRecording">
+    <div class="bottom-sheet">
+      <div class="transcription-box glass-panel fadeIn" *ngIf="transcribedText">
+        <div class="box-header">
+          <span class="label">Résultat</span>
+          <div class="actions">
+            <ion-button size="small" fill="clear" (click)="copyText()">
+              <ion-icon slot="icon-only" name="copy-outline"></ion-icon>
+            </ion-button>
+            <ion-button size="small" fill="clear" (click)="presentDownloadActionSheet()">
+              <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+        <ion-textarea auto-grow="true" readonly rows="6" [value]="transcribedText"></ion-textarea>
+      </div>
 
-  <input
-    type="file"
-    accept="audio/*"
-    hidden
-    #audioFileInput
-    (change)="onAudioFileSelected($event)"
-  />
+      <div class="media-preview glass-panel fadeIn" *ngIf="audioURL && !isRecording && !transcribedText">
+        <div class="box-header">
+           <span class="label">Aperçu {{ previewType === 'video' ? 'Vidéo' : 'Audio' }}</span>
+           <ion-button size="small" fill="clear" (click)="audioURL = null; previewType = null">
+             <ion-icon slot="icon-only" name="close"></ion-icon>
+           </ion-button>
+        </div>
+        <audio *ngIf="previewType === 'audio'" [src]="audioURL" controls class="custom-audio"></audio>
+        <video *ngIf="previewType === 'video'" [src]="audioURL" controls class="custom-video"></video>
+      </div>
 
-  <input
-    type="file"
-    accept="video/*"
-    hidden
-    #videoFileInput
-    (change)="onVideoFileSelected($event)"
-  />
+      <div class="controls-container">
+        <div class="side-actions" [style.visibility]="isRecording ? 'hidden' : 'visible'">
+          <input type="file" accept="audio/*" hidden #audioInput (change)="onAudioFileSelected($event)" />
+          <input type="file" accept="video/*" hidden #videoInput (change)="onVideoFileSelected($event)" />
+          
+          <ion-button fill="clear" class="icon-btn" (click)="presentFileOptions()">
+            <ion-icon name="folder-open-outline"></ion-icon>
+          </ion-button>
+          <div class="btn-label">Fichier</div>
+        </div>
 
-  <ion-button
-    size="small"
-    fill="outline"
-    (click)="audioFileInput.click()">
-    <ion-icon slot="start" name="musical-notes-outline"></ion-icon>
-    Import Audio
-  </ion-button>
+        <div class="mic-wrapper">
+          <div class="glow-bg" [class.active]="isRecording"></div>
+          <button class="main-mic-btn" (click)="isRecording ? stopRecording() : startRecording()">
+            <ion-icon [name]="isRecording ? 'square' : 'mic'"></ion-icon>
+          </button>
+        </div>
 
-  <ion-button
-    size="small"
-    fill="outline"
-    (click)="videoFileInput.click()">
-    <ion-icon slot="start" name="videocam-outline"></ion-icon>
-    Import Video
-  </ion-button>
-
-</div>
-
-<div class="audio-player-section"
-     *ngIf="audioURL && !isRecording">
-
-  <div class="separator"></div>
-
-  <p class="audio-label">
-    {{ previewType === 'video' ? 'Vidéo sélectionnée :' : 'Audio :' }}
-  </p>
-
-  <audio
-    *ngIf="previewType === 'audio'"
-    [src]="audioURL"
-    controls
-    class=" audio-player">
-  </audio>
-
-  <video
-    *ngIf="previewType === 'video'"
-    [src]="audioURL"
-    controls
-    class="media-player video-player">
-  </video>
-
-</div>
-
-
-
-</div>
-</ion-card>
-
-
-  <!-- Transcription Section -->
-<ion-card class="transcription-card">
-
-  <ion-card-header class="card-header">
-    <ion-card-title>
-      
-      Transcription
-    </ion-card-title>
-
-    <ion-button
-      fill="clear"
-      size="small"
-      (click)="copyText()"
-      [disabled]="!transcribedText">
-      <ion-icon slot="icon-only" name="copy-outline"></ion-icon>
-    </ion-button>
-    <ion-button
-        fill="clear"
-        size="small"
-        (click)="presentDownloadActionSheet()"
-        [disabled]="!transcribedText">
-        <ion-icon slot="icon-only" name="download-outline"></ion-icon>
-      </ion-button>
-  </ion-card-header>
-
-  <ion-card-content>
-    <ion-textarea
-      auto-grow="true"
-      fill="outline"
-      rows="12"
-      placeholder="Le texte transcrit apparaîtra ici..."
-      [(ngModel)]="transcribedText">
-    </ion-textarea>
-  </ion-card-content>
-
-</ion-card>
-
-
+        <div class="side-actions" [style.visibility]="isRecording ? 'hidden' : 'visible'">
+          <ion-button fill="clear" class="icon-btn" (click)="presentUrlPrompt()">
+            <ion-icon name="link-outline"></ion-icon>
+          </ion-button>
+           <div class="btn-label">Lien</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </ion-content>
