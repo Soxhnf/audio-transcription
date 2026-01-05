@@ -1,20 +1,152 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+<ion-header translucent>
+  <ion-toolbar class="custom-toolbar">
+    <ion-title class="ion-text-center">
+   Audio → Texte
+  <div class="subtitle">Transcription intelligente avec IA</div>
+</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content fullscreen class="ion-padding">
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+  <!-- Recording Section -->
+  <ion-card class="record-card">
+    <div class="record-container">
+
+  <ion-button
+    class="record-btn"
+    shape="round"
+    color="primary"
+    *ngIf="!isRecording"
+    (click)="startRecording()">
+    <ion-icon name="mic"></ion-icon>
+  </ion-button>
+
+  <ion-button
+    class="record-btn"
+    shape="round"
+    color="danger"
+    *ngIf="isRecording"
+    (click)="stopRecording()">
+    <ion-icon name="stop"></ion-icon>
+  </ion-button>
+
+  <p class="record-label">
+    {{ isRecording ? 'Enregistrement en cours…' : 'Appuyez pour enregistrer' }}
+  </p>
+   <p class="record-timer" *ngIf="isRecording">
+  ⏱{{ recordingTime }}
+  </p>
+  <div class="waveform" *ngIf="isRecording">
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+  <span></span>
+</div>
+<div class="import-section" *ngIf="!isRecording">
+
+  <input
+    type="file"
+    accept="audio/*"
+    hidden
+    #audioFileInput
+    (change)="onAudioFileSelected($event)"
+  />
+
+  <input
+    type="file"
+    accept="video/*"
+    hidden
+    #videoFileInput
+    (change)="onVideoFileSelected($event)"
+  />
+
+  <ion-button
+    size="small"
+    fill="outline"
+    (click)="audioFileInput.click()">
+    <ion-icon slot="start" name="musical-notes-outline"></ion-icon>
+    Import Audio
+  </ion-button>
+
+  <ion-button
+    size="small"
+    fill="outline"
+    (click)="videoFileInput.click()">
+    <ion-icon slot="start" name="videocam-outline"></ion-icon>
+    Import Video
+  </ion-button>
+
+</div>
+
+<div class="audio-player-section"
+     *ngIf="audioURL && !isRecording">
+
+  <div class="separator"></div>
+
+  <p class="audio-label">
+    {{ previewType === 'video' ? 'Vidéo sélectionnée :' : 'Audio :' }}
+  </p>
+
+  <audio
+    *ngIf="previewType === 'audio'"
+    [src]="audioURL"
+    controls
+    class=" audio-player">
+  </audio>
+
+  <video
+    *ngIf="previewType === 'video'"
+    [src]="audioURL"
+    controls
+    class="media-player video-player">
+  </video>
+
+</div>
+
+
+
+</div>
+</ion-card>
+
+
+  <!-- Transcription Section -->
+<ion-card class="transcription-card">
+
+  <ion-card-header class="card-header">
+    <ion-card-title>
+      
+      Transcription
+    </ion-card-title>
+
+    <ion-button
+      fill="clear"
+      size="small"
+      (click)="copyText()"
+      [disabled]="!transcribedText">
+      <ion-icon slot="icon-only" name="copy-outline"></ion-icon>
+    </ion-button>
+    <ion-button
+        fill="clear"
+        size="small"
+        (click)="presentDownloadActionSheet()"
+        [disabled]="!transcribedText">
+        <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+      </ion-button>
+  </ion-card-header>
+
+  <ion-card-content>
+    <ion-textarea
+      auto-grow="true"
+      fill="outline"
+      rows="12"
+      placeholder="Le texte transcrit apparaîtra ici..."
+      [(ngModel)]="transcribedText">
+    </ion-textarea>
+  </ion-card-content>
+
+</ion-card>
+
+
 </ion-content>
