@@ -25,7 +25,7 @@
         <span class="pulse-dot"></span> Enregistrement...
       </div>
 
-      <h2 class="main-greeting" *ngIf="!isRecording && !transcribedText && !audioURL">
+      <h2 class="main-greeting" *ngIf="!isRecording &&  !audioURL">
         Bonjour,<br><span>Prêt à transcrire ?</span>
       </h2>
 
@@ -50,10 +50,10 @@
             </ion-button>
           </div>
         </div>
-        <ion-textarea auto-grow="true" readonly rows="6" [value]="transcribedText"></ion-textarea>
+        <ion-textarea auto-grow="true" rows="6" [(ngModel)]="transcribedText"> </ion-textarea>
       </div>
 
-      <div class="media-preview glass-panel fadeIn" *ngIf="audioURL && !isRecording && !transcribedText">
+      <div class="media-preview glass-panel fadeIn" *ngIf="audioURL && !isRecording ">
         <div class="box-header">
            <span class="label">Aperçu {{ previewType === 'video' ? 'Vidéo' : 'Audio' }}</span>
            <ion-button size="small" fill="clear" (click)="audioURL = null; previewType = null">
